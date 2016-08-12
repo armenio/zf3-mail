@@ -1,0 +1,27 @@
+{
+	"name": "armenio/zf3-mail",
+	"description": "Zend Framework 3 mail abstraction",
+	"type": "library",
+	"keywords": [
+		"mail",
+		"helper",
+		"zf3",
+		"armenio"
+	],
+	"homepage": "https://github.com/armenio/zf3-mail",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Rafael Armênio",
+			"email": "rafael.armenio@gmail.com"
+		}
+	],
+	"require": {
+		"zendframework/zend-mail": "^2.7"
+	},
+	"autoload": {
+		"psr-4": {
+			"Armenio\\Mail\\": "src/"
+		}
+	}
+}
