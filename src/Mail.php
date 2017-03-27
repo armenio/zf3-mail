@@ -79,8 +79,6 @@ class Mail
                 $htmlBody = str_replace(sprintf('{$%s}', $field), $config['post'][$field], $htmlBody);
             }
         } else {
-            $htmlBody .= str_repeat('= ', $config['lineWidth'] / 2) . PHP_EOL;
-
             $maxWidth = 0;
             foreach ($config['fields'] as $label) {
                 $currentWidth = mb_strlen($label);
@@ -93,8 +91,6 @@ class Mail
                 $widthDiff = (strlen($label) - mb_strlen($label));
                 $htmlBody .= sprintf('<strong>%s:</strong> %s', str_pad($label, $maxWidth + $widthDiff, '.', STR_PAD_RIGHT), $config['post'][$field]) . PHP_EOL;
             }
-
-            $htmlBody .= str_repeat('= ', $config['lineWidth'] / 2);
 
             $htmlBody = '
 			<html>
