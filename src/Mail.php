@@ -76,7 +76,7 @@ class Mail
             $htmlBody = file_get_contents($config['template']);
 
             foreach ($config['fields'] as $field => $label) {
-                $htmlBody = str_replace(sprintf('{$%s}', $field), $config['post'][$field], $htmlBody);
+                $htmlBody = str_replace(sprintf('{$%s}', $field), htmlspecialchars($config['post'][$field], ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8'), $htmlBody);
             }
         } else {
             $htmlBody .= str_repeat('= ', $config['lineWidth'] / 2) . PHP_EOL;
@@ -91,7 +91,7 @@ class Mail
 
             foreach ($config['fields'] as $field => $label) {
                 $widthDiff = (strlen($label) - mb_strlen($label));
-                $htmlBody .= sprintf('<strong>%s:</strong> %s', str_pad($label, $maxWidth + $widthDiff, '.', STR_PAD_RIGHT), $config['post'][$field]) . PHP_EOL;
+                $htmlBody .= sprintf('<strong>%s:</strong> %s', str_pad($label, $maxWidth + $widthDiff, '.', STR_PAD_RIGHT), htmlspecialchars($config['post'][$field], ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8')) . PHP_EOL;
             }
 
             $htmlBody .= str_repeat('= ', $config['lineWidth'] / 2);
