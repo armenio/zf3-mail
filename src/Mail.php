@@ -93,7 +93,7 @@ class Mail
             }
 
             $htmlBody = '
-			<html>
+            <html>
 				<body>
 					<table>
 						<tr>
