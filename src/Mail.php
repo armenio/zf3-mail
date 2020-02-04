@@ -127,7 +127,6 @@ class Mail
         }
 
         $htmlBody = str_replace('{$extraBody}', htmlspecialchars(nl2br($extraBody), ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8'), $htmlBody);
-
         $htmlBody = trim($htmlBody);
 
         $html = new MimePart($htmlBody);
