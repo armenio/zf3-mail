@@ -22,6 +22,10 @@ class Mail
      */
     public static function send($config = [])
     {
+        if (empty($config['from']) || empty($config['to'])) {
+            return false;
+        }
+
         if (!empty($config['smtp'])) {
             $transport = new SmtpTransport(new SmtpOptions([
                 'name' => $config['smtp']['name'],
@@ -45,19 +49,13 @@ class Mail
 
         $message = new Message();
 
-        $message->setEncoding($config['charset']);
-
-        if (empty($config['from'])) {
-            return false;
+        if (!empty($config['charset'])) {
+            $message->setEncoding($config['charset']);
         }
 
         foreach ($config['from'] as $email => $name) {
             $message->setFrom($email, $name);
             break;
-        }
-
-        if (empty($config['to'])) {
-            return false;
         }
 
         foreach ($config['to'] as $email => $name) {
@@ -129,6 +127,8 @@ class Mail
         }
 
         $htmlBody = str_replace('{$extraBody}', htmlspecialchars(nl2br($extraBody), ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8'), $htmlBody);
+
+        $htmlBody = trim($htmlBody);
 
         $html = new MimePart($htmlBody);
         $html->type = 'text/html';
