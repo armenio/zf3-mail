@@ -1,4 +1,5 @@
 <?php
+
 namespace Armenio\Mail;
 
 use Zend\Mail\Exception\RuntimeException;
@@ -46,9 +47,17 @@ class Mail
 
         $message->setEncoding($config['charset']);
 
+        if (empty($config['from'])) {
+            return false;
+        }
+
         foreach ($config['from'] as $email => $name) {
             $message->setFrom($email, $name);
             break;
+        }
+
+        if (empty($config['to'])) {
+            return false;
         }
 
         foreach ($config['to'] as $email => $name) {
@@ -64,47 +73,62 @@ class Mail
             break;
         }
 
-        $message->setSubject($config['subject']);
+        if (!empty($config['subject'])) {
+            $message->setSubject($config['subject']);
+        }
 
         $htmlBody = '';
 
-        if (!empty($config['html'])) {
+        if (!empty($config['html']) && trim($config['html']) != '') {
 
-            $htmlBody = $config['html'];
+            $htmlBody = trim($config['html']);
 
-        } elseif (!empty($config['template'])) {
+        } else if (!empty($config['template']) && file_exists($config['template'])) {
+
             $htmlBody = file_get_contents($config['template']);
 
-            foreach ($config['fields'] as $field => $label) {
-                $htmlBody = str_replace(sprintf('{$%s}', $field), htmlspecialchars($config['post'][$field], ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8'), $htmlBody);
-            }
-        } else {
-            $maxWidth = 0;
-            foreach ($config['fields'] as $label) {
-                $currentWidth = mb_strlen($label);
-                if ($currentWidth > $maxWidth) {
-                    $maxWidth = $currentWidth;
-                }
-            }
+        }
 
-            foreach ($config['fields'] as $field => $label) {
-                $widthDiff = (strlen($label) - mb_strlen($label));
-                $htmlBody .= sprintf('<strong>%s:</strong> %s', str_pad($label, $maxWidth + $widthDiff, '.', STR_PAD_RIGHT), htmlspecialchars($config['post'][$field], ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8')) . PHP_EOL;
-            }
-
+        if (empty($htmlBody)) {
             $htmlBody = '
             <html>
-				<body>
-					<table>
-						<tr>
-							<td>
-								<div style="font-family: \'courier new\', courier, monospace; font-size: 14px;">' . nl2br($htmlBody) . '</div>
-							</td>
-						</tr>
-					</table>
-				</body>
-			</html>';
+                <body>
+                    <table>
+                        <tr>
+                            <td>
+                                <div style="font-family: \'courier new\', courier, monospace; font-size: 14px;">{$extraBody}</div>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+            </html>';
         }
+
+        // É possível que mesmo um template html use os campos de $config['fields']
+        $extraBody = '';
+        if (!empty($config['fields']) && is_array($config['fields']) && !empty($config['post']) && is_array($config['post'])) {
+            // Cria linhas em $extraBody com placeholders de $config['fields']
+            foreach ($config['fields'] as $field => $label) {
+                $extraBody .= sprintf('<strong>%s:</strong> {$%s}', $label, $field) . PHP_EOL;
+            }
+
+            // Faz replace dos placeholders por valores de $config['post']
+            foreach ($config['fields'] as $field => $label) {
+                $value = array_key_exists($field, $config['post']) ? $config['post'][$field] : '';
+
+                $extraBody = str_replace(sprintf('{$%s}', $field), htmlspecialchars($value, ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8'), $extraBody);
+
+                // Deixa para substituir quando terminar o loop
+                if ($field == 'extraBody') {
+                    continue;
+                }
+
+                // Faz replace em $htmlBody também, pois $extraBody nem sempre estará presente
+                $htmlBody = str_replace(sprintf('{$%s}', $field), htmlspecialchars($value, ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8'), $htmlBody);
+            }
+        }
+
+        $htmlBody = str_replace('{$extraBody}', htmlspecialchars(nl2br($extraBody), ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8'), $htmlBody);
 
         $html = new MimePart($htmlBody);
         $html->type = 'text/html';
@@ -112,14 +136,15 @@ class Mail
         $body = new MimeMessage();
         $body->setParts([$html]);
 
-
         $message->setBody($body);
 
         try {
             $transport->send($message);
+
             return true;
         } catch (RuntimeException $e) {
-            return false;
         }
+
+        return false;
     }
 }
